@@ -1,1 +1,247 @@
-%Fernando Sanchez
+% Fernando Sanchez
+
+% MD Principal
+diag_mod(main,
+[
+  [
+    id ==> is,
+    type ==> neutral,
+    arcs ==>
+    [
+      empty : empty => co
+    ]
+  ],
+  [
+    id ==> co,
+    type ==> kb,
+    arcs ==>
+    [
+      start : ir(punto_inicio, X, Y) => rwa(X, Y)
+    ]
+  ],
+  [
+    id ==> rwa1(X, Y),
+    type ==> recursive, embedded_dm ==> encuentra(X, Y),
+    arcs ==>
+    [
+      encontro(X, Y, si) : empty => rv,
+      salir : cerrar => fs
+    ]
+  ],
+  [
+    id ==> rv,
+    type ==> recursive, embedded_dm ==> ver(persona),
+    arcs ==>
+    [
+      identifico(persona, si) : di(pregunta_nombre) => rls(nombre),
+      salir : cerrar => fs
+    ]
+  ],
+  [
+    id ==> rls(Algo),
+    type ==> recursive, embedded_dm ==> escucha(Algo),
+    arcs ==>
+    [
+      escucho(Algo, si): di(bienvenido, Algo) => rwb,
+      salir : cerrar => fs
+    ]
+  ],
+  [
+    id ==> rwb,
+    type ==> recursive, embedded_dm ==> conexion,
+    arcs ==>
+    [
+      me(Libres) : empty => rmesas(Libres),
+      salir : cerrar => fs
+    ]
+  ],
+  [
+    id ==> rmesas(Libres),
+    type ==> recursive, embedded_dm ==> estado(Libres),
+    arcs ==>
+    [
+      continua(Libres) : [Libres = 0, esperar, ir(mesa, X, Y)] => [Libres = 0, rv, rwa2(X, Y)],
+      salir : cerrar => fs
+    ]
+  ],
+  [
+    id ==> rwa2(X, Y),
+    type ==> recursive, embedded_dm ==> encuentra(X, Y),
+    arcs ==>
+    [
+      encontro(X, Y, si) : [di(despedida), ir(punto_inicio, X, Y)] => rwa1(X, Y),
+      salir : cerrar => fs
+    ]
+  ],
+  [
+    id ==> fs,
+    type ==> final
+  ]
+]
+)
+
+% subMD Encuentra un lugar en coordenadas
+diag_mod(encuentra(X,Y),
+[
+  [
+    id ==> is,
+    type ==> neutral,
+    arcs ==>
+    [
+      empty : empty => ruta
+    ]
+  ],
+  [
+    id ==> ruta,
+    type ==> arithmetic,
+    arcs ==>
+    [
+      empty : [setruta(X,Y), getruta(Ruta)] => desplaza(Ruta)
+    ]
+  ],
+  [
+    id ==> desplaza(Ruta),
+    type ==> walking,
+    arcs ==>
+    [
+      llegar(Ruta.X, Ruta.Y, si, ultimo) : di(mensaje) => encontro(X, Y, si),
+      llegar(Ruta.X, Ruta.Y, X, P) : [setruta(Ruta.X, Ruta.Y), getruta(Ruta)] => desplaza(Ruta)
+    ]
+  ],
+  [
+    id ==> encontro(X, Y, si),
+    type ==> final
+  ]
+]
+)
+
+% subMD Ver objetos
+diag_mod(ver(Obj),
+[
+  [
+    id ==> is,
+    type ==> neutral,
+    arcs ==>
+    [
+      empty : empty => identifica
+    ]
+  ],
+  [
+    id ==> identifica,
+    type ==> seeing,
+    arcs ==>
+    [
+      ve(Obj, high, si) : di(mensaje) => identifico(Obj, si),
+      ve(Obj, Q, X) : empty => identifica
+    ]
+  ],
+  [
+    id ==> identifico(Obj, si),
+    type ==> final
+  ]
+]
+)
+
+% subMD Escuchar
+diag_mod(escucha(Algo),
+[
+  [
+    id ==> is,
+    type ==> neutral,
+    arcs ==>
+    [
+      empty : empty => oir
+    ]
+  ],
+  [
+    id ==> oir,
+    type ==> listening,
+    arcs ==>
+    [
+      entiende(Algo, high, si) : di(mensaje) => escucho(Algo, si),
+      entiende(Algo, Q, X) : di(repitelo) => oir
+    ]
+  ],
+  [
+    id ==> escucho(Algo, si),
+    type ==> final
+  ]
+]
+)
+
+% subMD Establecer comunicacion remota
+diag_mod(conexion,
+[
+  [
+    id ==> is,
+    type ==> neutral,
+    arcs ==>
+    [
+      empty : empty => web
+    ]
+  ],
+  [
+    id ==> web,
+    type ==> ssh,
+    arcs ==>
+    [
+      online(si) : getmesas(Libres) => me(Libres),
+      online(no) : [connect(ip, port, user, pass), muestra(estado)] => web
+    ]
+  ],
+  [
+    id ==> me(Libres),
+    type ==> final
+  ]
+]
+)
+
+% subMD Estado de las mesas
+diag_mod(estado(X),
+[
+  [
+    id ==> is,
+    type ==> neutral,
+    arcs ==>
+    [
+      empty : empty => m
+    ]
+  ],
+  [
+    id ==> m,
+    type ==> neutral,
+    arcs ==>
+    [
+      empty : empty => [X>1, m2, m0, m1]
+    ]
+  ],
+  [
+    id ==> m0,
+    type ==> neutral,
+    arcs ==>
+    [
+      empty : di(no_hay_mesas) => continua(X)
+    ]
+  ],
+  [
+    id ==> m1,
+    type ==> neutral,
+    arcs ==>
+    [
+      empty : di(sigame) => continua(X)
+    ]
+  ],
+  [
+    id ==> rm2,
+    type ==> recursive, embedded_dm ==> escucha(mesa),
+    arcs ==>
+    [
+      escucho(mesa, si) : di(sigame => continua(X)
+    ]
+  ],
+  [
+    id ==> continua(X),
+    type ==> final
+  ]
+]
+)
